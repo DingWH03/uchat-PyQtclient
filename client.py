@@ -39,7 +39,6 @@ class Client(QWidget):
         QTimer.singleShot(0, self.start_receiving)
 
     def start_receiving(self):
-        print("运行接收线程")
         asyncio.create_task(self.api.receive_messages(self.comm))
 
     @asyncSlot()
