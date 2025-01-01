@@ -1,0 +1,9 @@
+{
+    "files": [
+        "api.py",
+        "client.py",
+        "form.ui",
+        "protocol.py",
+        "utils.py"
+    ]
+}
