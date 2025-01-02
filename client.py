@@ -21,24 +21,23 @@ class Client(QWidget):
         self.ui = Ui_client()
         self.ui.setupUi(self)
 
-        # Communication signals
+        # 发送信号
         self.comm = comm
         self.comm.message_received.connect(self.display_message)
         self.comm.error_received.connect(self.display_error)
         self.comm.disconnected.connect(self.handle_disconnection)
 
-        # ChatClientAPI instance
+        # 初始化Api
         self.api = ChatClientAPI()
 
-        # Connect UI elements to functions
+        # 连接按钮到槽函数
         self.ui.pushButton_connect.clicked.connect(self.connect_to_server)
         self.ui.pushButton_login.clicked.connect(self.login)
         self.ui.pushButton_send.clicked.connect(self.send_message)
-
-        # Schedule the receiver task after the event loop starts
-        QTimer.singleShot(0, self.start_receiving)
+        self.ui.pushButton_signup.clicked.connect(self.signup)
 
     def start_receiving(self):
+        print("启动消息接收进程")
         asyncio.create_task(self.api.receive_messages(self.comm))
 
     @asyncSlot()
@@ -66,6 +65,7 @@ class Client(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "连接失败", f"无法连接到服务器: {e}")
 
+    # 登陆系统的函数
     @asyncSlot()
     async def login(self):
         username = self.ui.lineEdit_username.text()
@@ -76,14 +76,34 @@ class Client(QWidget):
 
         try:
             response = await self.api.login(username, password)
-            print(response)
+            # print(response)
             if response.get("status") == "success":
                 QMessageBox.information(self, "登录成功", "欢迎进入聊天系统！")
                 self.ui.stackedWidget.setCurrentWidget(self.ui.page_chat)
+                # Schedule the receiver task after the event loop starts
+                QTimer.singleShot(0, self.start_receiving)
             else:
                 QMessageBox.warning(self, "登录失败", response.get("message"))
         except Exception as e:
             QMessageBox.critical(self, "登录失败", f"发生错误: {e}")
+
+    # 注册账号的处理函数
+    @asyncSlot()
+    async def signup(self):
+        username = self.ui.lineEdit_username.text()
+        password = self.ui.lineEdit_password.text()
+        if not username or not password:
+            QMessageBox.warning(self, "错误", "用户名和密码不能为空")
+            return
+
+        try:
+            response = await self.api.register(username, password)
+            if response.get("status") == "ok":
+                QMessageBox.information(self, "注册成功", "欢迎使用聊天系统！")
+            else:
+                QMessageBox.warning(self, "注册失败", response.get("message"))
+        except Exception as e:
+            QMessageBox.critical(self, "注册失败", f"发生错误: {e}")
 
     @asyncSlot()
     async def send_message(self):
@@ -116,7 +136,7 @@ class Client(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    # Set up the qasync event loop
+    # 启动qasync异步线程
     loop = QEventLoop(app)
     asyncio.set_event_loop(loop)
 

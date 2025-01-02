@@ -43,6 +43,19 @@ class ChatClientAPI:
         response = await self.read_packet()
         return response
 
+    async def register(self, username: str, password: str) -> dict:
+        if not self.running:
+            raise ConnectionError("尚未连接到服务器")
+
+        login_request = LoginRequest(
+            action="register",
+            username=username,
+            password=password
+        )
+        await self.send_packet(json.loads(login_request.to_json()))
+        response = await self.read_packet()
+        return response
+
     async def send_message(self, receiver: str, message: str):
         if not self.running:
             raise ConnectionError("尚未连接到服务器")
